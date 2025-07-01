@@ -1,13 +1,14 @@
 package main
+
 import (
-	"fmt"
-	"strings"
 	"bufio"
+	"fmt"
 	"os"
+	"strings"
 )
 
 func cleanInput(text string) []string {
-	
+
 	cleanText := strings.Fields(text)
 	for i, v := range cleanText {
 		cleanText[i] = strings.TrimSpace(v)
@@ -25,7 +26,8 @@ func main() {
 		cleanText := cleanInput(text)
 		if cmd, ok := commands[cleanText[0]]; ok {
 			cmd.callback(cfg)
-		} else { 
-			fmt.Print("Unknown command \n") }
+		} else {
+			fmt.Print("Unknown command \n")
+		}
 	}
 }
