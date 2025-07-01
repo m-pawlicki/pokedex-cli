@@ -134,7 +134,7 @@ func commandCatch(config *Config, args []string) error {
 	successThreshold := 100 - (res.BaseEXP / 10)
 	if catchRoll < successThreshold {
 		fmt.Printf("%s was caught!\n", res.Name)
-		cfg.Pokedex[res.Name] = res
+		config.Pokedex[res.Name] = res
 		fmt.Println("You may now inspect it with the inspect command.")
 		return nil
 	} else {
@@ -148,7 +148,7 @@ func commandInspect(config *Config, args []string) error {
 		fmt.Printf("Please input a Pokemon to inspect\nUsage: inspect <pokemon-name>\n")
 		return nil
 	}
-	pkmn, ok := cfg.Pokedex[args[0]]
+	pkmn, ok := config.Pokedex[args[0]]
 	if ok {
 		fmt.Printf("Name: %s\n", pkmn.Name)
 		fmt.Printf("Height: %d\n", pkmn.Height)
@@ -168,6 +168,18 @@ func commandInspect(config *Config, args []string) error {
 	return nil
 }
 
+func commandPokedex(config *Config, args []string) error {
+	if len(config.Pokedex) < 1 {
+		fmt.Println("You have no Pokemon! Try catching some using the catch command.")
+	} else {
+		fmt.Println("Your Pokedex:")
+		for k := range config.Pokedex {
+			fmt.Printf(" - %s\n", config.Pokedex[k].Name)
+		}
+	}
+	return nil
+}
+
 func init() {
 
 	commands["exit"] = cliCommand{
@@ -179,7 +191,7 @@ func init() {
 
 	commands["help"] = cliCommand{
 		name:        "help",
-		description: "Displays a help message",
+		description: "Displays this help message",
 		callback:    commandHelp,
 		config:      cfg,
 	}
@@ -216,6 +228,13 @@ func init() {
 		name:        "inspect <pokemon-name>",
 		description: "Inspect a caught Pokemon",
 		callback:    commandInspect,
+		config:      cfg,
+	}
+
+	commands["pokedex"] = cliCommand{
+		name:        "pokedex",
+		description: "View your Pokedex",
+		callback:    commandPokedex,
 		config:      cfg,
 	}
 }
