@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"time"
 
@@ -17,7 +18,8 @@ type cliCommand struct {
 }
 
 var commands = map[string]cliCommand{}
-var cfg = &Config{Cache: pokecache.NewCache(time.Minute)}
+var cfg = &Config{Cache: pokecache.NewCache(time.Minute), Pokedex: dex}
+var dex = map[string]Pokemon{}
 
 func commandExit(config *Config, args []string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
@@ -115,6 +117,54 @@ func commandCatch(config *Config, args []string) error {
 		fmt.Printf("Please input a Pokemon to try and catch\nUsage: catch <pokemon-name>\n")
 		return nil
 	}
+	pkmn := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", args[0])
+	body, err := cfg.getBody(pkmn)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	res := Pokemon{}
+	err = json.Unmarshal(body, &res)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	fmt.Printf("Throwing a Pokeball at %s...\n", res.Name)
+	catchRoll := rand.Intn(100)
+	successThreshold := 100 - (res.BaseEXP / 10)
+	if catchRoll < successThreshold {
+		fmt.Printf("%s was caught!\n", res.Name)
+		cfg.Pokedex[res.Name] = res
+		fmt.Println("You may now inspect it with the inspect command.")
+		return nil
+	} else {
+		fmt.Printf("%s escaped!\n", res.Name)
+		return nil
+	}
+}
+
+func commandInspect(config *Config, args []string) error {
+	if len(args) < 1 {
+		fmt.Printf("Please input a Pokemon to inspect\nUsage: inspect <pokemon-name>\n")
+		return nil
+	}
+	pkmn, ok := cfg.Pokedex[args[0]]
+	if ok {
+		fmt.Printf("Name: %s\n", pkmn.Name)
+		fmt.Printf("Height: %d\n", pkmn.Height)
+		fmt.Printf("Weight: %d\n", pkmn.Weight)
+		fmt.Println("Stats:")
+		for s := range pkmn.Stats {
+			fmt.Printf("  -%s: %d\n", pkmn.Stats[s].Stat.Name, pkmn.Stats[s].BaseStat)
+		}
+		fmt.Println("Types:")
+		for t := range pkmn.Types {
+			fmt.Printf("  -%s\n", pkmn.Types[t].Type.Name)
+		}
+	} else {
+		fmt.Println("You have not caught that pokemon")
+		return nil
+	}
 	return nil
 }
 
@@ -150,15 +200,22 @@ func init() {
 
 	commands["explore"] = cliCommand{
 		name:        "explore <area-name>",
-		description: "Explore a specific area for pokemon",
+		description: "Explore an area for Pokemon",
 		callback:    commandExplore,
 		config:      cfg,
 	}
 
 	commands["catch"] = cliCommand{
 		name:        "catch <pokemon-name>",
-		description: "Attempt to catch a Pokemon",
+		description: "Try to catch a Pokemon",
 		callback:    commandCatch,
+		config:      cfg,
+	}
+
+	commands["inspect"] = cliCommand{
+		name:        "inspect <pokemon-name>",
+		description: "Inspect a caught Pokemon",
+		callback:    commandInspect,
 		config:      cfg,
 	}
 }
