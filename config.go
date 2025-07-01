@@ -11,7 +11,8 @@ import (
 type Config struct {
 	Next     string
 	Previous string
-	cache    *pokecache.Cache
+	Cache    *pokecache.Cache
+	Pokedex  map[string]Pokemon
 }
 
 type LocationAreaAPIResource struct {
@@ -22,11 +23,20 @@ type LocationAreaAPIResource struct {
 }
 
 type LocationArea struct {
+	Name       string             `json:"name"`
+	Encounters []PokemonEncounter `json:"pokemon_encounters"`
+}
+
+type PokemonEncounter struct {
+	Pokemon Pokemon `json:"pokemon"`
+}
+
+type Pokemon struct {
 	Name string `json:"name"`
 }
 
 func (cfg *Config) getBody(url string) ([]byte, error) {
-	v, ok := cfg.cache.Get(url)
+	v, ok := cfg.Cache.Get(url)
 	if ok {
 		return v, nil
 	}
@@ -34,14 +44,14 @@ func (cfg *Config) getBody(url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	body, err := io.ReadAll(req.Body)
 	defer req.Body.Close()
-	if req.StatusCode > 299 {
-		return nil, fmt.Errorf("response failed with status code: %d and\nbody: %s", req.StatusCode, body)
-	}
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, err
 	}
-	cfg.cache.Add(url, body)
+	if req.StatusCode > 299 {
+		return nil, fmt.Errorf("response failed with status code: %d and\nbody: %s", req.StatusCode, body)
+	}
+	cfg.Cache.Add(url, body)
 	return body, nil
 }

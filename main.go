@@ -25,7 +25,8 @@ func main() {
 		text := scanner.Text()
 		cleanText := cleanInput(text)
 		if cmd, ok := commands[cleanText[0]]; ok {
-			cmd.callback(cfg)
+			args := cleanText[1:]
+			cmd.callback(cfg, args)
 		} else {
 			fmt.Print("Unknown command \n")
 		}
