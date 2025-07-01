@@ -1,20 +1,21 @@
 package main
+
 import (
 	"fmt"
-	"net/http"
 	"io"
+	"net/http"
 )
 
 type config struct {
-	Next string
+	Next     string
 	Previous string
 }
 
 type LocationAreaAPIResource struct {
-	Count int `json:"count"`
-	Next string `json:"next"`
-	Previous string `json:"previous"`
-	Results []LocationArea `json:"results"`
+	Count    int            `json:"count"`
+	Next     string         `json:"next"`
+	Previous string         `json:"previous"`
+	Results  []LocationArea `json:"results"`
 }
 
 type LocationArea struct {
@@ -29,7 +30,7 @@ func getBody(url string) ([]byte, error) {
 	body, err := io.ReadAll(req.Body)
 	defer req.Body.Close()
 	if req.StatusCode > 299 {
-		fmt.Errorf("Response failed with status code: %d and\nbody: %s", req.StatusCode, body)
+		return nil, fmt.Errorf("Response failed with status code: %d and\nbody: %s", req.StatusCode, body)
 	}
 	if err != nil {
 		return nil, err
